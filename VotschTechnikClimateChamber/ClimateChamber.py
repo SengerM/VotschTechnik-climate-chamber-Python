@@ -210,9 +210,7 @@ class ClimateChamber:
 		return response
 	
 	def query(command_name: str, *arguments):
-		f"""Given a command name (e.g. 'SET CONTROL_VALUE SET_POINT', for all available command names see below) and the arguments, the command is sent to the chamber. Returns a list with the data from the response from the climate chamber. This function checks if the command was successfully accepted and executed by the climate chamber, or if there was any kind of error reported by the chamber; in such a case a RuntimeError is raised.
-		
-		Available commands: {COMMANDS_LIST}"""
+		"""Given a command name (e.g. 'SET CONTROL_VALUE SET_POINT', for all available command names see `VotschTechnikClimateChamber.ClimateChamber.COMMANDS_LIST`) and the arguments, the command is sent to the chamber. Returns a list with the data from the response from the climate chamber. This function checks if the command was successfully accepted and executed by the climate chamber, or if there was any kind of error reported by the chamber; in such a case a RuntimeError is raised."""
 		raise NotImplementedError('THIS FUNCTION WAS NOT YET TESTED.')
 		command_number = translate_command_name_to_command_number(command_name)
 		response = self.query_command_low_level(command_number, *arguments)
