@@ -6,18 +6,26 @@ in an easy way using Python.
 
 ## Installation
 
-Option 1:
+Option 1 (easy, black box, you just want to use this):
 
 ```
 pip3 install git+https://github.com/SengerM/VotschTechnik-climate-chamber-Python
 ```
 
-Option 2:
+Option 2 (still easy, allows you to change the code):
 
 Clone the repo wherever you want and then
 
 ```
 pip3 install -e /wherever/you/wanted/to/clone/this/repo
+```
+
+### Uninstall
+
+To uninstall this package just run
+
+```
+pip3 uninstall VotschTechnikClimateChamber
 ```
 
 ## Usage
