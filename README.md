@@ -40,3 +40,8 @@ chamber.temperature_set_point = 0 # Set it to 0 °C.
 print(f'The set temperature of the chamber is {chamber.temperature_set_point} °C.')
 print(f'The actual temperature in the chamber is {chamber.temperature_measured} °C.')
 ```
+
+## Reference
+
+Check the source code, specifically in [this file](VotschTechnikClimateChamber/ClimateChamber.py). If there is a specific method in the `ClimateChamber` class to do what you want, use it. Otherwise you will have to send the commands using the method `ClimateChamber.query`. The available commands are those in the `COMMANDS_DICT` which is defined in [the same file](VotschTechnikClimateChamber/ClimateChamber.py). If your command is not in `COMMANDS_DICT` you will have to use the method `ClimateChamber.query_command_low_level` and enter the command numbers manually, as stated in the user manual, which is a pain.
+
