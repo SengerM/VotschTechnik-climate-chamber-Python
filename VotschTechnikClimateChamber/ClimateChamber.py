@@ -323,6 +323,3 @@ class ClimateChamber:
 	def stop(self):
 		"""Stops the climate chamber."""
 		self.query('START MANUAL_MODE', 1, 0)
-
-if __name__ == '__main__':
-	print(repr(translate_command_name_to_command_number('GET GRADIENT_DOWN VALUE')))
