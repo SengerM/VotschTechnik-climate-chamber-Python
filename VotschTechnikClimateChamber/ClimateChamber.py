@@ -315,6 +315,14 @@ class ClimateChamber:
 			return True
 		else:
 			raise RuntimeError(f'Queried for compressed air status to the climate chamber, I was expecting the answer to be either 0 or 1 but received `{status}` which I dont know how to interpret...')
+	
+	def start(self):
+		"""Starts the climate chamber."""
+		self.query('START MANUAL_MODE', 1, 1)
+	
+	def stop(self):
+		"""Stops the climate chamber."""
+		self.query('START MANUAL_MODE', 1, 0)
 
 if __name__ == '__main__':
 	print(repr(translate_command_name_to_command_number('GET GRADIENT_DOWN VALUE')))
