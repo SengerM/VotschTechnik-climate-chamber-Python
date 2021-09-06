@@ -232,7 +232,6 @@ class ClimateChamber:
 		response = raw_response.decode('utf-8', errors='backslashreplace').replace('\\xb6',separator_character).replace('\r\n','')
 		if 'read failed' in response.lower() or int(response.split(separator_character)[0]) != 1:
 			raise RuntimeError(f'Command "{command_name}" was sent to the climate chamber with arguments {arguments} and the climate chamber responded with an error code. I have no idea what happened, sorry. The raw response from the climate chamber is: {raw_response}.')
-		response = response[:-2] # The last two characters are always \r\n.
 		response = response.split(separator_character)
 		response = response[1:]
 		return response
