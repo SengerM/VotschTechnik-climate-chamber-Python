@@ -224,6 +224,22 @@ class ClimateChamber:
 		return response
 	
 	@property
+	def serial_number(self):
+		return self.query('get chamber info', 3)[0]
+	
+	@property
+	def test_system_type(self):
+		return self.query('get chamber info', 1)[0]
+	
+	@property
+	def year_manufactured(self):
+		return self.query('get chamber info', 2)[0]
+	
+	@property
+	def idn(self):
+		return f'Climate chamber vötschtechnik, {self.test_system_type}, serial N° {self.serial_number}, manufactured in 20{self.year_manufactured}'
+	
+	@property
 	def temperature_measured(self):
 		return float(self.query('GET CONTROL_VARIABLE ACTUAL_VALUE', 1)[0])
 	
