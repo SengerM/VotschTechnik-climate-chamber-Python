@@ -139,7 +139,6 @@ COMMANDS_DICT = {
 	},
 }
 COMMANDS_LIST = _generate_list_of_all_possible_commands(COMMANDS_DICT)
-SEPARATOR_CHARACTER = '¶' # '\xb6' # ASCII code 182, according to [2] page 5.
 
 def _validate_type(var, var_name, typ):
 	if not isinstance(var, typ):
@@ -147,16 +146,12 @@ def _validate_type(var, var_name, typ):
 
 def create_command_string(command_number: str, *arguments):
 	"""Given the command number and a list of arguments, creates the 
-	string that has to be sent to the chamber. Note that this creates a
-	string, NOT an encoded string (i.e. not bytes).
+	string that has to be sent to the chamber. Note that this creates an 
+	encoded string (i.e. not bytes), i.e. a sequence of bytes?
 	
 	- command_number: string, the number of the command as a five digit
 	string, e.g. '11001'.
-	- arguments: Arguments for the command.
-	
-	Example:
-	print(repr(create_command_string('11001',1,25.0)))
-	'11001¶1¶1¶25.0\r'"""
+	- arguments: Arguments for the command."""
 	# See page 5 of reference [2] or page 3 of [3].
 	_validate_type(command_number, 'command_number', str)
 	try:
@@ -168,7 +163,12 @@ def create_command_string(command_number: str, *arguments):
 	chamber_index = '1' # According to [2], "the chamber index is irrelevant and can always have the value 1"...
 	if len(arguments) > 4:
 		raise ValueError(f'The maximum number of arguments is 4, but received {len(arguments)}.')
-	return SEPARATOR_CHARACTER.join([command_number, str(chamber_index)] + [str(arg) for arg in arguments]) + '\r'
+	command_string = ''.encode('ascii')
+	separator_character = b'\xb6' # ASCII code 182, according to [2] page 5.
+	for element in [command_number, str(chamber_index)] + [str(arg) for arg in arguments]:
+		command_string += element.encode('ascii') + separator_character
+	command_string = command_string[:-1] + '\r'.encode('ascii')
+	return command_string
 
 def translate_command_name_to_command_number(command_name: str):
 	"""Given a command name	returns the corresponding command number as 
@@ -200,41 +200,40 @@ class ClimateChamber:
 			self.socket.connect((ip, 2049)) # According to [2] § 2.2 this is the port, always.
 			self.socket.settimeout(timeout)
 	
-	def query_command_low_level(command_number, *arguments):
+	def query_command_low_level(self, command_number, *arguments):
 		"""Given the command number and the arguments it is sent to the climate chamber. The response from the chamber to that command is returned without any processing."""
-		raise NotImplementedError('THIS FUNCTION WAS NOT YET TESTED.')
 		string_to_send = create_command_string(str(command_number), *arguments)
 		with self._communication_lock:
 			self.socket.send(string_to_send)
 			response = self.socket.recv(512) # The example in [2] § 6, and also the code in [1], does this.
 		return response
 	
-	def query(command_name: str, *arguments):
+	def query(self, command_name: str, *arguments):
 		"""Given a command name (e.g. 'SET CONTROL_VALUE SET_POINT', for all available command names see `VotschTechnikClimateChamber.ClimateChamber.COMMANDS_LIST`) and the arguments, the command is sent to the chamber. Returns a list with the data from the response from the climate chamber. This function checks if the command was successfully accepted and executed by the climate chamber, or if there was any kind of error reported by the chamber; in such a case a RuntimeError is raised."""
-		raise NotImplementedError('THIS FUNCTION WAS NOT YET TESTED.')
 		command_number = translate_command_name_to_command_number(command_name)
-		response = self.query_command_low_level(command_number, *arguments)
+		raw_response = self.query_command_low_level(command_number, *arguments)
+		separator_character = '¶'
+		response = raw_response.decode('utf-8', errors='backslashreplace').replace('\\xb6',separator_character).replace('\r\n','')
+		if 'read failed' in response.lower() or int(response.split(separator_character)[0]) != 1:
+			raise RuntimeError(f'Command "{command_name}" was sent to the climate chamber with arguments {arguments} and the climate chamber responded with an error code. I have no idea what happened, sorry. The raw response from the climate chamber is: {raw_response}.')
 		response = response[:-2] # The last two characters are always \r\n.
-		response = response.split(SEPARATOR_CHARACTER)
-		status_code = response[0]
+		response = response.split(separator_character)
 		response = response[1:]
-		if int(status_code) != 1:
-			raise RuntimeError(f'Command "{command_name}" was sent to the climate chamber with arguments {arguments} and the climate chamber responded with an error code. I have no idea what happened, sorry. The error code from the chamber is {status_code}, according to the user manual -6 means "too few or incorrect parameters" and -8 means "data could not be read".')
 		return response
 	
 	@property
 	def temperature_measured(self):
-		raise NotImplementedError('THIS FUNCTION WAS NOT YET TESTED.')
-		return float(self.query('GET CONTROL_VARIABLE VALUE', 1)[0])
+		return float(self.query('GET CONTROL_VARIABLE ACTUAL_VALUE', 1)[0])
 	
 	@property
 	def temperature_set_point(self):
-		raise NotImplementedError('THIS FUNCTION WAS NOT YET TESTED.')
-		return float(self.query('GET CONTROL_VARIABLE SETPOINT', 1)[0])
+		return float(self.query('GET CONTROL_VARIABLE SET_POINT', 1)[0])
 	@temperature_set_point.setter
 	def temperature_set_point(self, celsius: float):
-		raise NotImplementedError('THIS FUNCTION WAS NOT YET TESTED.')
-		_validate_type(celsius, 'celsius', float)
+		try:
+			celsius = float(celsius)
+		except:
+			raise TypeError(f'Cannot interpret `{celsius}` as a temperature in Celsius.')
 		response = self.query('SET CONTROL_VARIABLE SET_POINT', 1, str(celsius)) # This is based in an example for setting the temperature from [2] § 3.2.
 
 if __name__ == '__main__':
