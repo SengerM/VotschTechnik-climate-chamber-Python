@@ -293,6 +293,28 @@ class ClimateChamber:
 		"""Set the maximum temperature limit in Celsius."""
 		_validate_float(celsius, 'celsius')
 		self._temperature_max = float(celsius)
+	
+	@property
+	def dryer(self):
+		"""Returns either `True` or `False` depending on whether the status of the dryer is on or off."""
+		status = self.query('GET DIGITAL_OUT VALUE', 8)[0]
+		if status == '0':
+			return False
+		elif status == '1':
+			return True
+		else:
+			raise RuntimeError(f'Queried for dryer status to the climate chamber, I was expecting the answer to be either 0 or 1 but received `{status}` which I dont know how to interpret...')
+	
+	@property
+	def compressed_air(self):
+		"""Returns either `True` or `False` depending on whether the status of the compressed air is on or off."""
+		status = self.query('GET DIGITAL_OUT VALUE', 7)[0]
+		if status == '0':
+			return False
+		elif status == '1':
+			return True
+		else:
+			raise RuntimeError(f'Queried for compressed air status to the climate chamber, I was expecting the answer to be either 0 or 1 but received `{status}` which I dont know how to interpret...')
 
 if __name__ == '__main__':
 	print(repr(translate_command_name_to_command_number('GET GRADIENT_DOWN VALUE')))
