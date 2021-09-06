@@ -144,6 +144,12 @@ def _validate_type(var, var_name, typ):
 	if not isinstance(var, typ):
 		raise TypeError(f'<{var_name}> must be of type {typ}, received object of type {type(var)}.')
 
+def _validate_float(var, var_name):
+	try:
+		float(var)
+	except:
+		raise TypeError(f'Cannot interpret <{var_name}> as a float number, received object of type {type(var)}.')
+
 def create_command_string(command_number: str, *arguments):
 	"""Given the command number and a list of arguments, creates the 
 	string that has to be sent to the chamber. Note that this creates an 
@@ -194,7 +200,15 @@ def translate_command_name_to_command_number(command_name: str):
 	return str(command_number)
 
 class ClimateChamber:
-	def __init__(self, ip: str, timeout=1):
+	def __init__(self, ip: str, temperature_min: float, temperature_max: float, timeout=1):
+		"""Creates an object of class ClimateChamber and starts the network connection to use it.
+		- ip: string, IP address of the climate chamber to control.
+		- temperature_min: float, minimum value of temperature to use. This is required for safety reasons to avoid accidentaly setting a temperature outside of this limit. This protection is implemented in this class, it does not touches anything into the climate chamber. If you use the methods provided by this class to control the temperature, everything should be fine. You can also set limits manually in the chamber itself using the control pannel.
+		- temperature_max: float, maximum value of temperature to use. See `temperature_min` description."""
+		_validate_float(temperature_min, 'temperature_min')
+		_validate_float(temperature_max, 'temperature_max')
+		self._temperature_min = float(temperature_min)
+		self._temperature_max = float(temperature_max)
 		_validate_type(ip, 'ip', str)
 		self._communication_lock = RLock() # To make a thread safe implementation.
 		with self._communication_lock:
@@ -225,34 +239,61 @@ class ClimateChamber:
 	
 	@property
 	def serial_number(self):
+		"""Returns the serial number as a string."""
 		return self.query('get chamber info', 3)[0]
 	
 	@property
 	def test_system_type(self):
+		"""Returns the "test system type" (model?)."""
 		return self.query('get chamber info', 1)[0]
 	
 	@property
 	def year_manufactured(self):
-		return self.query('get chamber info', 2)[0]
+		"""Returns the year manufactured as a string."""
+		return f"20{self.query('get chamber info', 2)[0]}"
 	
 	@property
 	def idn(self):
-		return f'Climate chamber vötschtechnik, {self.test_system_type}, serial N° {self.serial_number}, manufactured in 20{self.year_manufactured}'
+		"""Returns a string with information to identify the climate chamber."""
+		return f'Climate chamber vötschtechnik, {self.test_system_type}, serial N° {self.serial_number}, manufactured in {self.year_manufactured}'
 	
 	@property
 	def temperature_measured(self):
+		"""Returns the measured temperature as a float number in Celsius."""
 		return float(self.query('GET CONTROL_VARIABLE ACTUAL_VALUE', 1)[0])
 	
 	@property
 	def temperature_set_point(self):
+		"""Returns the set temperature as a float number in Celsius."""
 		return float(self.query('GET CONTROL_VARIABLE SET_POINT', 1)[0])
 	@temperature_set_point.setter
 	def temperature_set_point(self, celsius: float):
-		try:
-			celsius = float(celsius)
-		except:
-			raise TypeError(f'Cannot interpret `{celsius}` as a temperature in Celsius.')
-		response = self.query('SET CONTROL_VARIABLE SET_POINT', 1, str(celsius)) # This is based in an example for setting the temperature from [2] § 3.2.
+		"""Set the temperature in Celsius."""
+		_validate_float(celsius, 'celsius')
+		if not self._temperature_min <= celsius <= self._temperature_max:
+			raise ValueError(f'Trying to set temperature to {celsius} °C which is outside the temperature limits configured for this instance. These limits allow to set the temperature between {self._temperature_min} and {self._temperature_max} °C.')
+		else:
+			self.query('SET CONTROL_VARIABLE SET_POINT', 1, str(celsius)) # This is based in an example for setting the temperature from [2] § 3.2.
+	
+	@property
+	def temperature_min(self):
+		"""Returns the minimum temperature limit in Celsius as a float number."""
+		return self._temperature_min
+	@temperature_min.setter
+	def temperature_min(self, celsius: float):
+		"""Set the minimum temperature limit in Celsius."""
+		_validate_float(celsius, 'celsius')
+		self._temperature_min = float(celsius)
+	
+	@property
+	def temperature_max(self):
+		"""Returns the maximum temperature limit in Celsius as a float number."""
+		return self._temperature_max
+	@temperature_max.setter
+	def temperature_max(self, celsius: float):
+		"""Set the maximum temperature limit in Celsius."""
+		_validate_float(celsius, 'celsius')
+		self._temperature_max = float(celsius)
 
 if __name__ == '__main__':
 	print(repr(translate_command_name_to_command_number('GET GRADIENT_DOWN VALUE')))
