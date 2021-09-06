@@ -35,9 +35,13 @@ Just import and start using:
 ```Python
 from VotschTechnikClimateChamber.ClimateChamber import ClimateChamber
 
-chamber = ClimateChamber(ip='130.60.165.218') # Use the IP address shown in the display of the climate chamber.
+chamber = ClimateChamber(
+	ip = '130.60.165.218', # Use the IP address shown in the display of the climate chamber.
+	temperature_min = -20, # Minimum limit, will rise an error if try to set temperature lower than this.
+	temperature_max = 20, # Maximum limit, will rise an error if try to set temperature higher than this.
+)
 print(chamber.idn) # Prints 'Climate chamber vötschtechnik, LabEvent T/110/70/3, serial N° bla_bla_bla, manufactured in 2020'
-chamber.temperature_set_point = -0 # Set it to 0 °C.
+chamber.temperature_set_point = 20 # °C.
 print(f'The set temperature of the chamber is {chamber.temperature_set_point} °C.')
 print(f'The actual temperature in the chamber is {chamber.temperature_measured} °C.')
 ```
