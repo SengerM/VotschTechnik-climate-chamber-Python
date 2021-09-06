@@ -233,7 +233,7 @@ class ClimateChamber:
 	def temperature_set_point(self):
 		raise NotImplementedError('THIS FUNCTION WAS NOT YET TESTED.')
 		return float(self.query('GET CONTROL_VARIABLE SETPOINT', 1)[0])
-	@temperature_set.setter
+	@temperature_set_point.setter
 	def temperature_set_point(self, celsius: float):
 		raise NotImplementedError('THIS FUNCTION WAS NOT YET TESTED.')
 		_validate_type(celsius, 'celsius', float)
