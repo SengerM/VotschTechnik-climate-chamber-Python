@@ -147,11 +147,13 @@ def _validate_type(var, var_name, typ):
 def create_command_string(command_number: str, *arguments):
 	"""Given the command number and a list of arguments, creates the 
 	string that has to be sent to the chamber. Note that this creates an 
-	encoded string (i.e. not bytes), i.e. a sequence of bytes?
+	encoded string, i.e. a byte-string.
 	
 	- command_number: string, the number of the command as a five digit
 	string, e.g. '11001'.
-	- arguments: Arguments for the command."""
+	- arguments: Arguments for the command. These arguments will be 
+	converted into a string so if they need some formatting, you better
+	give me strings already formatted."""
 	# See page 5 of reference [2] or page 3 of [3].
 	_validate_type(command_number, 'command_number', str)
 	try:
@@ -201,7 +203,7 @@ class ClimateChamber:
 			self.socket.settimeout(timeout)
 	
 	def query_command_low_level(self, command_number, *arguments):
-		"""Given the command number and the arguments it is sent to the climate chamber. The response from the chamber to that command is returned without any processing."""
+		"""Given the command number and the arguments, the command string is created and sent to the climate chamber. The response from the chamber to that command is returned without any processing."""
 		string_to_send = create_command_string(str(command_number), *arguments)
 		with self._communication_lock:
 			self.socket.send(string_to_send)
