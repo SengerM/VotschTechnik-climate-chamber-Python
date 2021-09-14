@@ -145,10 +145,18 @@ def _validate_type(var, var_name, typ):
 		raise TypeError(f'<{var_name}> must be of type {typ}, received object of type {type(var)}.')
 
 def _validate_float(var, var_name):
+	"""Validates that `var` is a floating point like object (e.g. a string "3.14" is valid)."""
+	msg = f'Cannot interpret <{var_name}> as a float number, received object of type {type(var)}.'
 	try:
 		float(var)
 	except:
-		raise TypeError(f'Cannot interpret <{var_name}> as a float number, received object of type {type(var)}.')
+		raise TypeError(msg)
+	try:
+		len(var)
+	except:
+		pass
+	else:
+		raise TypeError(msg)
 
 def create_command_string(command_number: str, *arguments):
 	"""Given the command number and a list of arguments, creates the 
