@@ -113,7 +113,7 @@ COMMANDS_DICT = {
 			'SET_POINT': 13006, # ✅
 		},
 		'DIGITAL_OUT': { 
-			'VALUE': 14001,
+			'VALUE': 14001, # ✅
 		},
 		'GRADIENT_UP': {
 			'VALUE': 11068, # ✅
@@ -343,3 +343,27 @@ class ClimateChamber:
 	def stop(self):
 		"""Stops the climate chamber."""
 		self.query('START MANUAL_MODE', 1, 0)
+	
+	@property
+	def is_running(self):
+		"""Returns True if the climate chamber is running and False otherwise."""
+		status = self.query('GET DIGITAL_OUT VALUE', 1)[0]
+		if status == '0':
+			return False
+		if status == '1':
+			return True
+		else:
+			raise RuntimeError(f'Queried the climate chamber to see if it was running, I was expecting the answer to be either 0 or 1 but received `{status}` which I dont know how to interpret...')
+
+if __name__ == '__main__':
+	import time
+	
+	climate_chamber = ClimateChamber(ip = '130.60.165.218', temperature_min = -20, temperature_max = 20)
+	
+	print(climate_chamber.idn)
+	climate_chamber.start()
+	time.sleep(5)
+	print(climate_chamber.is_running())
+	climate_chamber.stop()
+	time.sleep(5)
+	print(climate_chamber.is_running())
