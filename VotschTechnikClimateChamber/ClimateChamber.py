@@ -257,7 +257,7 @@ class ClimateChamber:
 	@property
 	def year_manufactured(self):
 		"""Returns the year manufactured as a string."""
-		return f"20{self.query('get chamber info', 2)[0]}"
+		return f"{self.query('get chamber info', 2)[0]}"
 	
 	@property
 	def idn(self):
@@ -361,9 +361,3 @@ if __name__ == '__main__':
 	climate_chamber = ClimateChamber(ip = '130.60.165.218', temperature_min = -20, temperature_max = 20)
 	
 	print(climate_chamber.idn)
-	climate_chamber.start()
-	time.sleep(5)
-	print(climate_chamber.is_running())
-	climate_chamber.stop()
-	time.sleep(5)
-	print(climate_chamber.is_running())
