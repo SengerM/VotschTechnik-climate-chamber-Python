@@ -1,5 +1,6 @@
 import socket
 from threading import RLock
+import time
 
 # The manuals with the documentation are really hard (or impossible) to
 # find using Google. My code is based in Izaak's code [1]. He sent me 
@@ -318,6 +319,7 @@ class ClimateChamber:
 		if status not in {True, False}:
 			raise ValueError(f'<status> must be either True or False, received {status}.')
 		self.query('SET DIGITAL_OUT VALUE', 8, 1 if status==True else 0)
+		time.sleep(1)
 	
 	@property
 	def compressed_air(self):
@@ -335,14 +337,18 @@ class ClimateChamber:
 		if status not in {True, False}:
 			raise ValueError(f'<status> must be either True or False, received {status}.')
 		self.query('SET DIGITAL_OUT VALUE', 7, 1 if status==True else 0)
+		time.sleep(1)
 	
 	def start(self):
 		"""Starts the climate chamber."""
 		self.query('START MANUAL_MODE', 1, 1)
+		time.sleep(1)
+		
 	
 	def stop(self):
 		"""Stops the climate chamber."""
 		self.query('START MANUAL_MODE', 1, 0)
+		time.sleep(1)
 	
 	@property
 	def is_running(self):
