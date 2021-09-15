@@ -113,7 +113,7 @@ COMMANDS_DICT = {
 			'SET_POINT': 13006, # ✅
 		},
 		'DIGITAL_OUT': { 
-			# ~ 'VALUE': 14001, Command 14001 is "START MAN MODE".
+			'VALUE': 14001,
 		},
 		'GRADIENT_UP': {
 			'VALUE': 11068, # ✅
@@ -312,6 +312,12 @@ class ClimateChamber:
 			return True
 		else:
 			raise RuntimeError(f'Queried for dryer status to the climate chamber, I was expecting the answer to be either 0 or 1 but received `{status}` which I dont know how to interpret...')
+	@dryer.setter
+	def dryer(self, status: bool):
+		"""Turns on or off the dryer if status is True or False respectively."""
+		if status not in {True, False}:
+			raise ValueError(f'<status> must be either True or False, received {status}.')
+		self.query('SET DIGITAL_OUT VALUE', 8, 1 if status==True else 0)
 	
 	@property
 	def compressed_air(self):
@@ -323,6 +329,12 @@ class ClimateChamber:
 			return True
 		else:
 			raise RuntimeError(f'Queried for compressed air status to the climate chamber, I was expecting the answer to be either 0 or 1 but received `{status}` which I dont know how to interpret...')
+	@compressed_air.setter
+	def compressed_air(self, status: bool):
+		"""Turns on or off the compressed air if status is True or False respectively."""
+		if status not in {True, False}:
+			raise ValueError(f'<status> must be either True or False, received {status}.')
+		self.query('SET DIGITAL_OUT VALUE', 7, 1 if status==True else 0)
 	
 	def start(self):
 		"""Starts the climate chamber."""
