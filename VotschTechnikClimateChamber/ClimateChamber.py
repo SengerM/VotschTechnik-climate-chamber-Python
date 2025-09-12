@@ -2,7 +2,6 @@ import socket
 from threading import RLock
 import time
 
-
 # This code is based in Izaak's code [1]. I found the document from reference
 # [2] which has some more information.
 #
@@ -21,8 +20,6 @@ def _generate_list_of_all_possible_commands(dictionary):
             for sub_key in sub_keys:
                 return_list.append(f'{key} {sub_key}')
         return sorted([s.replace(' DELETE_ME_LALALALALALA', '') for s in return_list])
-
-
 COMMANDS_DICT = {
     # This dictionary was created by Izaak, see reference [1]. I just adapted it a little bit to be more human readable, and fixed typos in command numbers.
     'GET': {
@@ -133,11 +130,9 @@ COMMANDS_DICT = {
 }
 COMMANDS_LIST = _generate_list_of_all_possible_commands(COMMANDS_DICT)
 
-
 def _validate_type(var, var_name, typ):
     if not isinstance(var, typ):
         raise TypeError(f'<{var_name}> must be of type {typ}, received object of type {type(var)}.')
-
 
 def _validate_float(var, var_name):
     """Validates that `var` is a floating point like object (e.g. a string "3.14" is valid)."""
@@ -153,7 +148,6 @@ def _validate_float(var, var_name):
     else:
         raise TypeError(msg)
 
-
 def create_command_string(command_number: str, *arguments):
     """Given the command number and a list of arguments, creates the
     string that has to be sent to the chamber. Note that this creates an
@@ -168,11 +162,9 @@ def create_command_string(command_number: str, *arguments):
     try:
         int(command_number)
     except:
-        raise ValueError(
-            f'<command_number> must be a string with an integer number, received {command_number} which I dont know how to convert into an integer number.')
+        raise ValueError(f'<command_number> must be a string with an integer number, received {command_number} which I dont know how to convert into an integer number.')
     if len(command_number) != 5:
-        raise ValueError(
-            f'<command_number> musut be a string containing a 5 digits integer number, received {command_number}.')
+        raise ValueError(f'<command_number> musut be a string containing a 5 digits integer number, received {command_number}.')
     chamber_index = '1'
     if len(arguments) > 4:
         raise ValueError(f'The maximum number of arguments is 4, but received {len(arguments)}.')
@@ -183,7 +175,6 @@ def create_command_string(command_number: str, *arguments):
     command_string = command_string[:-1] + '\r'.encode('ascii')
     return command_string
 
-
 def translate_command_name_to_command_number(command_name: str):
     """Given a command name	returns the corresponding command number as
     a string. Example:
@@ -191,7 +182,6 @@ def translate_command_name_to_command_number(command_name: str):
     '11017'"""
     _validate_type(command_name, 'command_name', str)
     command_name = command_name.upper()  # This makes this function case insensitive, more human.
-
     def recursive_search(commands_dict, command_name):
         current_command = command_name.split(' ')[0]
         if current_command not in commands_dict:
@@ -201,13 +191,10 @@ def translate_command_name_to_command_number(command_name: str):
                 return recursive_search(commands_dict[current_command], ' '.join(command_name.split(' ')[1:]))
             else:
                 return commands_dict[current_command]
-
     command_number = recursive_search(COMMANDS_DICT, command_name)
     if command_number is None:
-        raise ValueError(
-            f'Invalid command "{command_name}". This is a list of all possible command names: {COMMANDS_LIST}.')
+        raise ValueError(f'Invalid command "{command_name}". This is a list of all possible command names: {COMMANDS_LIST}.')
     return str(command_number)
-
 
 class ClimateChamber:
     def __init__(self, ip: str, temperature_min: float, temperature_max: float, timeout=1):
@@ -239,54 +226,12 @@ class ClimateChamber:
         command_number = translate_command_name_to_command_number(command_name)
         raw_response = self.query_command_low_level(command_number, *arguments)
         separator_character = '¶'
-        response = raw_response.decode('utf-8', errors='backslashreplace').replace('\\xb6',
-                                                                                   separator_character).replace('\r\n',
-                                                                                                                '')
+        response = raw_response.decode('utf-8', errors='backslashreplace').replace('\\xb6',separator_character).replace('\r\n','')
         if 'read failed' in response.lower() or int(response.split(separator_character)[0]) != 1:
-            raise RuntimeError(
-                f'Command "{command_name}" was sent to the climate chamber with arguments {arguments} and the climate chamber responded with an error code. I have no idea what happened, sorry. The raw response from the climate chamber is: {raw_response}.')
+            raise RuntimeError(f'Command "{command_name}" was sent to the climate chamber with arguments {arguments} and the climate chamber responded with an error code. I have no idea what happened, sorry. The raw response from the climate chamber is: {raw_response}.')
         response = response.split(separator_character)
         response = response[1:]
         return response
-
-    @property
-    def error_messages(self):
-        """Returns a list of active error messages from the climate chamber."""
-        count = int(self.query('GET MESSAGE NUMBER_OF')[0])
-        errors = []
-        for i in range(1, count + 1):
-            text = self.query('GET MESSAGE TEXT', i)[0]
-            status = self.query('GET MESSAGE STATUS', i)[0]
-            if status == '1':  # 1 = active
-                errors.append(text)
-        return errors
-
-    @property
-    def program_status(self):
-        return self.query('GET PROGRAM STATUS')[0]
-
-    @property
-    def door_open(self):
-        status = self.query('GET DIGITAL_IN VALUE', 1)[0]
-        return status == '1'
-
-    @property
-    def gradient_up(self):
-        return float(self.query('GET GRADIENT_UP VALUE', 1)[0])
-
-    @property
-    def gradient_down(self):
-        return float(self.query('GET GRADIENT_DOWN VALUE', 1)[0])
-
-    @property
-    def active_program_name(self):
-        """Returns the name of the currently active program, or None if not available."""
-        try:
-            return self.query('GET PROGRAM NAME', 1)[0]
-        except RuntimeError as e:
-            if '-5' in str(e):
-                return None
-            raise e
 
     @property
     def serial_number(self):
@@ -313,29 +258,16 @@ class ClimateChamber:
         """Returns the measured temperature as a float number in Celsius."""
         return float(self.query('GET CONTROL_VARIABLE ACTUAL_VALUE', 1)[0])
 
-
-    @property
-    def humidity_measured(self):
-        """Returns the measured humidity as a float percentage (%RH)."""
-        return float(self.query('GET CONTROL_VARIABLE ACTUAL_VALUE', 2)[0])
-
-    @property
-    def humidity_set_point(self):
-        """Returns the set humidity as a float percentage (%RH)."""
-        return float(self.query('GET CONTROL_VARIABLE SET_POINT', 2)[0])
-
     @property
     def temperature_set_point(self):
         """Returns the set temperature as a float number in Celsius."""
         return float(self.query('GET CONTROL_VARIABLE SET_POINT', 1)[0])
-
     @temperature_set_point.setter
     def temperature_set_point(self, celsius: float):
         """Set the temperature in Celsius."""
         _validate_float(celsius, 'celsius')
         if not self._temperature_min <= celsius <= self._temperature_max:
-            raise ValueError(
-                f'Trying to set temperature to {celsius} °C which is outside the temperature limits configured for this instance. These limits allow to set the temperature between {self._temperature_min} and {self._temperature_max} °C.')
+            raise ValueError(f'Trying to set temperature to {celsius} °C which is outside the temperature limits configured for this instance. These limits allow to set the temperature between {self._temperature_min} and {self._temperature_max} °C.')
         else:
             self.query('SET CONTROL_VARIABLE SET_POINT', 1, str(celsius))
 
@@ -343,7 +275,6 @@ class ClimateChamber:
     def temperature_min(self):
         """Returns the minimum temperature limit in Celsius as a float number."""
         return self._temperature_min
-
     @temperature_min.setter
     def temperature_min(self, celsius: float):
         """Set the minimum temperature limit in Celsius."""
@@ -354,7 +285,6 @@ class ClimateChamber:
     def temperature_max(self):
         """Returns the maximum temperature limit in Celsius as a float number."""
         return self._temperature_max
-
     @temperature_max.setter
     def temperature_max(self, celsius: float):
         """Set the maximum temperature limit in Celsius."""
@@ -370,9 +300,7 @@ class ClimateChamber:
         elif status == '1':
             return True
         else:
-            raise RuntimeError(
-                f'Queried for dryer status to the climate chamber, I was expecting the answer to be either 0 or 1 but received `{status}` which I dont know how to interpret...')
-
+            raise RuntimeError(f'Queried for dryer status to the climate chamber, I was expecting the answer to be either 0 or 1 but received `{status}` which I dont know how to interpret...')
     @dryer.setter
     def dryer(self, status: bool):
         """Turns on or off the dryer if status is True or False respectively."""
@@ -390,9 +318,7 @@ class ClimateChamber:
         elif status == '1':
             return True
         else:
-            raise RuntimeError(
-                f'Queried for compressed air status to the climate chamber, I was expecting the answer to be either 0 or 1 but received `{status}` which I dont know how to interpret...')
-
+            raise RuntimeError(f'Queried for compressed air status to the climate chamber, I was expecting the answer to be either 0 or 1 but received `{status}` which I dont know how to interpret...')
     @compressed_air.setter
     def compressed_air(self, status: bool):
         """Turns on or off the compressed air if status is True or False respectively."""
@@ -405,6 +331,7 @@ class ClimateChamber:
         """Starts the climate chamber."""
         self.query('START MANUAL_MODE', 1, 1)
         time.sleep(1)
+
 
     def stop(self):
         """Stops the climate chamber."""
@@ -420,13 +347,58 @@ class ClimateChamber:
         if status == '1':
             return True
         else:
-            raise RuntimeError(
-                f'Queried the climate chamber to see if it was running, I was expecting the answer to be either 0 or 1 but received `{status}` which I dont know how to interpret...')
+            raise RuntimeError(f'Queried the climate chamber to see if it was running, I was expecting the answer to be either 0 or 1 but received `{status}` which I dont know how to interpret...')
 
+    @property
+    def error_messages(self):
+        """Returns a list of active error messages from the climate chamber."""
+        count = int(self.query('GET MESSAGE NUMBER_OF')[0])
+        errors = []
+        for i in range(1, count + 1):
+            text = self.query('GET MESSAGE TEXT', i)[0]
+            status = self.query('GET MESSAGE STATUS', i)[0]
+            if status == '1':
+                errors.append(text)
+        return errors
+
+    @property
+    def humidity_measured(self):
+        """Returns the measured humidity as a float percentage (%RH)."""
+        return float(self.query('GET CONTROL_VARIABLE ACTUAL_VALUE', 2)[0])
+
+    @property
+    def humidity_set_point(self):
+        """Returns the set humidity as a float percentage (%RH)."""
+        return float(self.query('GET CONTROL_VARIABLE SET_POINT', 2)[0])
+
+    @property
+    def program_status(self):
+        """Returns the current program status."""
+        return self.query('GET PROGRAM STATUS', 0)[0]
+
+    @property
+    def active_program_name(self):
+        """Returns the name of the currently active program, or None if not available."""
+        try:
+            return self.query('GET PROGRAM NAME', 1)[0]
+        except RuntimeError as e:
+            if '-5' in str(e):
+                return None
+            raise e
+
+    @property
+    def gradient_up(self):
+        """Returns the ramp-up rate as a float."""
+        return float(self.query('GET GRADIENT_UP VALUE', 1)[0])
+
+    @property
+    def gradient_down(self):
+        """Returns the ramp-down rate as a float."""
+        return float(self.query('GET GRADIENT_DOWN VALUE', 1)[0])
 
 if __name__ == '__main__':
     import time
 
-    climate_chamber = ClimateChamber(ip='130.60.165.218', temperature_min=-20, temperature_max=20)
+    climate_chamber = ClimateChamber(ip = '130.60.165.218', temperature_min = -20, temperature_max = 20)
 
     print(climate_chamber.idn)
